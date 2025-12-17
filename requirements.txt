@@ -1,7 +1,7 @@
 requests
 python-dotenv
 fastapi
-uvicorn[standard]
+uvicorn
 langgraph
 langchain
 langchain-core
