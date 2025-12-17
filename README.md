@@ -3,7 +3,7 @@
 ![Python](https://img.shields.io/badge/Python-3.x-blue)
 ![Warden Studio](https://img.shields.io/badge/Warden-Agent-green)
 
-# Algo Hunter — Warden Studio Ready Crypto Analysis Agent
+# Algo Hunter — LangChain & Warden Studio Ready Crypto Analysis Agent
 
 Algo Hunter is a Warden-ready AI agent that analyzes 9000+ crypto assets, detects exchange listings, ranks coins, and returns clean insights.
 
@@ -15,6 +15,16 @@ Algo Hunter is a Warden-ready AI agent that analyzes 9000+ crypto assets, detect
 - Precomputed Top 10 snapshot
 - Modular & Warden-optimized structure
 
+## LangChain & LangGraph Integration
+
+Algo Hunter is built using the **LangChain ecosystem** and structured with **LangGraph**
+to support stateful, modular, and production-ready agent workflows.
+
+- LangChain tools & executors  
+- LangGraph-based agent flow  
+- FastAPI-compatible agent interface  
+- Designed for seamless Warden Studio integration
+
 ### Files
 - `main.py` — Entrypoint  
 - `multi_fetcher.py` — Data enrichment  
@@ -24,6 +34,17 @@ Algo Hunter is a Warden-ready AI agent that analyzes 9000+ crypto assets, detect
 - `top10.csv` — Pre-ranked assets  
 - `agent.yaml` — Agent config  
 - `requirements.txt` — Dependencies  
+
+## Warden Studio Compatibility
+
+Algo Hunter is designed to be **Warden Studio–ready**:
+
+- Clean API entrypoint  
+- Deterministic outputs  
+- Modular agent structure  
+- Compatible with LangChain / LangGraph deployment flow  
+
+Once the Warden Agent Hub is public, this agent can be registered without refactoring.
 
 ### Author
 Built by **Rayhan Koly**
