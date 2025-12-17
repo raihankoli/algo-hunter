@@ -1,0 +1,35 @@
+name: Algo Hunter
+version: 1.0.0
+description: A full crypto analysis, ranking and exchange-detection AI agent built by Rayhan Koly.
+author: Rayhan Koly
+
+entrypoint: main.py
+
+requirements:
+  - requests
+  - pandas
+  - numpy
+
+files:
+  - coins.json
+  - enriched_coins.json
+  - top10.csv
+  - multi_fetcher.py
+  - leaderboard.py
+  - config.py
+
+inputs:
+  - id: query
+    type: string
+    required: true
+    description: "Crypto name or symbol to search."
+
+outputs:
+  - id: result
+    type: string
+    description: "Formatted response containing price, rank, score, signals and exchange listing."
+
+permissions:
+  - internet
+  - read
+  - write

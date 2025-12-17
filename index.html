@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Algo Hunter — Market Scan</title>
+
+<style>
+  :root{
+    --bg:#070f15;
+    --card:#0b1b29;
+    --text:#e8f9f9;
+    --muted:#9db6bb;
+    --accent:#00e5d1;
+    --accent-2:#0094ff;
+    --ok:#18a058;
+    --bad:#ff6b6b;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;font-family:Inter,system-ui;}
+
+  body{
+    background:linear-gradient(180deg,#061016 0%, #071827 100%);
+    color:var(--text);
+  }
+
+  header{
+    padding:18px 16px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+  }
+
+  .logo{
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    width:46px;height:46px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    color:#000;font-weight:700;font-size:20px;
+  }
+
+  h1{font-size:16px;margin:0;}
+  .subtitle{font-size:12px;color:var(--muted);}
+
+  .controls{
+    display:flex;gap:8px;flex-wrap:wrap;
+  }
+  input,select{
+    background:#0e1f2f;
+    border:1px solid rgba(255,255,255,0.05);
+    color:var(--text);
+    padding:8px 10px;
+    border-radius:8px;
+  }
+
+  button{
+    background:var(--accent);
+    border:none;
+    padding:8px 12px;
+    border-radius:8px;
+    color:#000;
+    font-weight:600;
+  }
+
+  .layout{
+    padding:16px;
+    max-width:1100px;
+    margin:auto;
+    display:grid;
+    gap:18px;
+  }
+
+  .card{
+    background:rgba(255,255,255,0.03);
+    padding:14px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.04);
+  }
+
+  table{width:100%;border-collapse:collapse;margin-top:10px;}
+  th,td{
+    padding:8px 6px;
+    border-bottom:1px dashed rgba(255,255,255,0.08);
+    font-size:13px;
+  }
+  th{color:var(--muted);}
+
+  .chip{
+    padding:3px 6px;
+    border-radius:6px;
+    font-size:11px;
+  }
+  .bin{background:rgba(0,229,209,0.15);color:var(--accent);}
+  .cb{background:rgba(0,149,255,0.15);color:var(--accent-2);}
+  .no{background:rgba(255,255,255,0.05);color:var(--muted);}
+</style>
+</head>
+
+<body>
+<header>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <div class="logo">AH</div>
+    <div>
+      <h1>Algo Hunter — Market Scanner</h1>
+      <div class="subtitle">9000+ assets • Exchange hints • Agent-ready</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <input id="search" placeholder="Search..." />
+    <select id="exchangeFilter">
+      <option value="all">All</option>
+      <option value="binance">Binance</option>
+      <option value="coinbase">Coinbase</option>
+    </select>
+    <select id="sort">
+      <option value="score">Score</option>
+      <option value="market_cap">Market cap</option>
+      <option value="price">Price</option>
+    </select>
+    <button onclick="render()">Refresh</button>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="card">
+    <h3>Top Assets</h3>
+    <div id="tableWrap">Loading…</div>
+  </div>
+</div>
+
+<script>
+async function loadData(){
+  const res = await fetch("enriched_coins.json");
+  const data = await res.json();
+
+  data.forEach(c => {
+    const mc = c.quote?.USD?.market_cap || 0;
+    const bin = c.binance_pair ? 1 : 0;
+    const cb = c.coinbase_pair ? 1 : 0;
+    c._score = (bin * 150) + (cb * 90) + (mc > 0 ? Math.log10(mc) : 0);
+  });
+
+  window.DATA = data;
+  render();
+}
+
+function render(){
+  let list = window.DATA || [];
+
+  const q = document.getElementById("search").value.toLowerCase();
+  const filter = document.getElementById("exchangeFilter").value;
+  const sort = document.getElementById("sort").value;
+
+  if(q){
+    list = list.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      c.symbol.toLowerCase().includes(q)
+    );
+  }
+
+  if(filter === "binance") list = list.filter(c => c.binance_pair);
+  if(filter === "coinbase") list = list.filter(c => c.coinbase_pair);
+
+  list.sort((a,b)=>{
+    if(sort==="score") return b._score - a._score;
+    if(sort==="price") return (b.quote?.USD?.price||0) - (a.quote?.USD?.price||0);
+    if(sort==="market_cap") return (b.quote?.USD?.market_cap||0) - (a.quote?.USD?.market_cap||0);
+  });
+
+  let html = `
+  <table>
+    <thead>
+      <tr>
+        <th>#</th><th>Name</th><th>Sym</th>
+        <th>Score</th><th>Price</th><th>MC</th><th>EX</th>
+      </tr>
+    </thead>
+    <tbody>
+  `;
+
+  list.slice(0,100).forEach((c,i)=>{
+    const p = c.quote?.USD?.price || 0;
+    const mc = c.quote?.USD?.market_cap || 0;
+
+    html += `
+      <tr>
+        <td>${i+1}</td>
+        <td>${c.name}</td>
+        <td>${c.symbol}</td>
+        <td>${c._score.toFixed(1)}</td>
+        <td>$${p.toFixed(4)}</td>
+        <td>${mc.toLocaleString()}</td>
+        <td>
+          ${c.binance_pair?'<span class="chip bin">B</span>':'<span class="chip no">—</span>'}
+          ${c.coinbase_pair?'<span class="chip cb">C</span>':''}
+        </td>
+      </tr>
+    `;
+  });
+
+  html += "</tbody></table>";
+  document.getElementById("tableWrap").innerHTML = html;
+}
+
+loadData();
+</script>
+</body>
+</html>
