@@ -1,4 +1,4 @@
-<p align="center"><img src="https://github.com/rayhankoly/algo-hunter-agent/releases/download/v1.0.0/logo.png" width="320" alt="Algo Hunter Logo"/</p>
+<p align="center"><img src="https://raw.githubusercontent.com/raihankoli/algo-hunter/main/logo.png" width="200" /></p>
 
 ![Python](https://img.shields.io/badge/Python-3.x-blue)
 ![Warden Studio](https://img.shields.io/badge/Warden-Agent-green)
