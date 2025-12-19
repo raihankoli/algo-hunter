@@ -32,3 +32,18 @@ graph.set_entry_point("algo")
 graph.set_finish_point("algo")
 
 agent = graph.compile()
+
+from fastapi import FastAPI, Header, HTTPException
+
+app = FastAPI()
+
+TEST_API_KEY = "test_warden_123"
+
+def verify_key(x_api_key: str = Header(None)):
+    if x_api_key != TEST_API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+@app.post("/run")
+def run_agent(payload: dict, x_api_key: str = Header(None)):
+    verify_key(x_api_key)
+    return agent.invoke(payload)
