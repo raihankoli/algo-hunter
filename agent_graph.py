@@ -37,7 +37,8 @@ from fastapi import FastAPI, Header, HTTPException
 
 app = FastAPI()
 
-TEST_API_KEY = "test_warden_123"
+import os
+TEST_API_KEY = os.getenv("API_KEY")
 
 def verify_key(x_api_key: str = Header(None)):
     if x_api_key != TEST_API_KEY:
