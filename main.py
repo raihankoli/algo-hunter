@@ -72,7 +72,14 @@ load_dotenv()
 API_KEY = os.getenv("API_KEY")  # Render env var
 
 app = FastAPI(title="Algo Hunter API")
-
+@app.get("/")
+def root():
+    return {
+        "service": "algo-hunter",
+        "status": "running",
+        "docs": "/docs",
+        "health": "/health"
+}
 
 def check_api_key(x_api_key: Optional[str]):
     if API_KEY:
