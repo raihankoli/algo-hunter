@@ -72,6 +72,20 @@ load_dotenv()
 API_KEY = os.getenv("API_KEY")  # Render env var
 
 app = FastAPI(title="Algo Hunter API")
+
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://studio.wardn.dev",
+        "https://studio.wardenprotocol.org",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.get("/")
 def root():
     return {
