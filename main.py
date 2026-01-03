@@ -4,6 +4,15 @@ import argparse
 import os
 from typing import List, Dict, Any, Optional
 
+from fastapi import FastAPI, Header, HTTPException, Query
+from pydantic import BaseModel
+from dotenv import load_dotenv
+
+# ---------------- ENV ----------------
+load_dotenv()
+API_KEY = os.getenv("API_KEY")  # set in .env
+
+# ---------------- CORE LOGIC ----------------
 def load_json_file(path: str) -> List[Dict[str, Any]]:
     if not os.path.exists(path):
         raise FileNotFoundError(f"{path} not found")
@@ -12,7 +21,6 @@ def load_json_file(path: str) -> List[Dict[str, Any]]:
     if not isinstance(data, list):
         raise ValueError(f"{path} does not contain a JSON list")
     return data
-
 
 def extract_asset_info(item: Dict[str, Any]) -> Dict[str, Any]:
     usd = item.get("quote", {}).get("USD", {}) if isinstance(item.get("quote"), dict) else {}
@@ -24,7 +32,6 @@ def extract_asset_info(item: Dict[str, Any]) -> Dict[str, Any]:
         "market_cap": usd.get("market_cap"),
     }
 
-
 def get_assets_data() -> List[Dict[str, Any]]:
     if os.path.exists("enriched_coins.json"):
         data_file = "enriched_coins.json"
@@ -32,13 +39,13 @@ def get_assets_data() -> List[Dict[str, Any]]:
         data_file = "coins.json"
     return load_json_file(data_file)
 
-
 def get_preview_assets(show: int = 5) -> List[Dict[str, Any]]:
     assets = get_assets_data()
     return [extract_asset_info(a) for a in assets[:show]]
 
-
+# ---------------- CLI ----------------
 def cli_main():
+    import argparse
     parser = argparse.ArgumentParser(description="Algo Hunter - coins preview")
     parser.add_argument("--show", "-s", type=int, default=5, help="How many items to show")
     args = parser.parse_args()
@@ -60,21 +67,11 @@ def cli_main():
 
     print("🎯 Algo Hunter run complete!")
 
-
-# ---------------- FASTAPI (PRODUCTION) ----------------
-
-from fastapi import FastAPI, Header, HTTPException, Query
-from pydantic import BaseModel
-from dotenv import load_dotenv
-
-load_dotenv()
-
-API_KEY = os.getenv("API_KEY")  # Render env var
-
+# ---------------- FASTAPI ----------------
 app = FastAPI(title="Algo Hunter API")
 
+# CORS
 from fastapi.middleware.cors import CORSMiddleware
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -86,43 +83,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-def root():
-    return {
-        "service": "algo-hunter",
-        "status": "running",
-        "docs": "/docs",
-        "health": "/health"
-}
-
 def check_api_key(x_api_key: Optional[str]):
     if API_KEY:
         if not x_api_key or x_api_key != API_KEY:
             raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
-
+# Responses
 class PreviewResponse(BaseModel):
     total: int
     preview: List[Dict[str, Any]]
-
 
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "algo-hunter"}
 
-
 @app.get("/preview", response_model=PreviewResponse)
-def preview(
-    show: int = Query(5, ge=1, le=100),
-    x_api_key: Optional[str] = Header(None),
-):
+def preview(show: int = Query(5, ge=1, le=100), x_api_key: Optional[str] = Header(None)):
     check_api_key(x_api_key)
-    assets = get_assets_data()
-    return {
-        "total": len(assets),
-        "preview": get_preview_assets(show),
-    }
-
+    return {"total": len(get_assets_data()), "preview": get_preview_assets(show)}
 
 @app.get("/top10")
 def top10(x_api_key: Optional[str] = Header(None)):
@@ -154,8 +132,15 @@ def top10(x_api_key: Optional[str] = Header(None)):
 
     return {"top10": out}
 
+# ---------------- AGENTCHAT ROUTE ----------------
+@app.post("/run")
+def run_agent(payload: dict, x_api_key: Optional[str] = Header(None)):
+    check_api_key(x_api_key)
+    # simple agent logic: preview top 5 coins if no input
+    show = payload.get("show", 5)
+    result = get_preview_assets(show)
+    return {"result": result}
 
 # ---------------- ENTRY POINT ----------------
-
 if __name__ == "__main__":
     cli_main()
